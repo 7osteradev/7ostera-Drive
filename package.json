@@ -1,0 +1,30 @@
+{
+  "name": "7ostera-drive",
+  "version": "1.0.0",
+  "description": "An open-source Google Drive alternative built with Node.js",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js"
+  },
+  "keywords": [
+    "drive",
+    "cloud-storage",
+    "open-source",
+    "nodejs"
+  ],
+  "author": "7ostera",
+  "license": "MIT",
+  "dependencies": {
+    "adm-zip": "^0.5.17",
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^9.4.3",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.18.3",
+    "express-rate-limit": "^8.4.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^9.0.1"
+  }
+}

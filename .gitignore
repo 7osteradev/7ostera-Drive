@@ -1,0 +1,10 @@
+node_modules/
+server/uploads/
+server/drive.db
+*.db
+*.sqlite
+*.sqlite3
+.env
+*.log
+.DS_Store
+Thumbs.db

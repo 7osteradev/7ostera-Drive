@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shared File — 7ostera Drive</title>
+  <link rel="stylesheet" href="/css/main.css" />
+  <style>
+    body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; background: var(--bg); }
+    .share-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 36px; max-width: 560px; width: 100%; box-shadow: var(--shadow-lg); text-align: center; }
+    .share-icon { width: 72px; height: 72px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; background: var(--surface-2); border-radius: var(--radius-lg); border: 1px solid var(--border); }
+    .share-icon svg { width: 36px; height: 36px; color: var(--accent); stroke: var(--accent); }
+    .share-name { font-size: 20px; font-weight: 600; margin-bottom: 6px; word-break: break-word; }
+    .share-meta { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
+    .share-preview { margin: 20px 0; border-radius: var(--radius); overflow: hidden; }
+    .share-preview img { max-width: 100%; max-height: 380px; object-fit: contain; border-radius: var(--radius); }
+    .share-preview video { width: 100%; border-radius: var(--radius); }
+    .share-preview audio { width: 100%; }
+    .share-preview iframe { width: 100%; height: 420px; border: none; border-radius: var(--radius); }
+    .share-preview pre { background: var(--surface-2); padding: 16px; border-radius: var(--radius); text-align: left; font-size: 12px; max-height: 320px; overflow: auto; }
+    .share-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .brand { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 12px; color: var(--text-muted); }
+    .brand a { color: var(--text-muted); font-weight: 500; }
+    .brand a:hover { color: var(--text); }
+    .error-state { color: var(--text-muted); text-align: center; }
+    .error-state .big { margin-bottom: 12px; display: flex; justify-content: center; }
+    .error-state .big svg { color: var(--text-muted); stroke: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <div id="share-card" class="share-card">
+    <div style="color:var(--text-muted);font-size:13px;">Loading…</div>
+  </div>
+  <div class="brand">Powered by <img src="/logo.png" alt="" style="height:14px;vertical-align:middle;border-radius:2px;margin-right:4px;" onerror="this.style.display='none'"/><a href="/">7ostera Drive</a> · Open Source</div>
+  <div id="toast-container"></div>
+
+  <script>
+    const theme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+
+    function formatBytes(b) {
+      if (!b) return '—';
+      if (b < 1024) return b + ' B';
+      if (b < 1048576) return (b/1024).toFixed(1)+' KB';
+      if (b < 1073741824) return (b/1048576).toFixed(1)+' MB';
+      return (b/1073741824).toFixed(2)+' GB';
+    }
+    function fileIcon(mime, name) {
+      if (!mime) return '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>';
+      if (mime.startsWith('image/')) return '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+      if (mime.startsWith('video/')) return '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>';
+      if (mime.startsWith('audio/')) return '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
+      if (mime==='application/pdf') return '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>';
+      if (mime.startsWith('text/')) return '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>';
+      return '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>';
+    }
+    function showToast(msg, type='default') {
+      const c = document.getElementById('toast-container');
+      const t = document.createElement('div');
+      t.className = `toast ${type}`; t.textContent = msg;
+      c.appendChild(t); setTimeout(() => t.remove(), 3500);
+    }
+
+    async function load() {
+      const token = location.pathname.split('/share/')[1];
+      const card = document.getElementById('share-card');
+      try {
+        const res = await fetch(`/api/share/${token}`);
+        if (!res.ok) throw new Error();
+        const { file } = await res.json();
+        const previewSrc = `/api/share/${token}/preview`;
+        const downloadSrc = `/api/share/${token}/download`;
+        const m = file.mime_type || '';
+        let previewHtml = '';
+        if (m.startsWith('image/')) {
+          previewHtml = `<div class="share-preview"><img src="${previewSrc}" alt="${file.name}" /></div>`;
+        } else if (m.startsWith('video/')) {
+          previewHtml = `<div class="share-preview"><video controls><source src="${previewSrc}" type="${m}" /></video></div>`;
+        } else if (m.startsWith('audio/')) {
+          previewHtml = `<div class="share-preview"><audio controls><source src="${previewSrc}" type="${m}" /></audio></div>`;
+        } else if (m === 'application/pdf') {
+          previewHtml = `<div class="share-preview"><iframe src="${previewSrc}"></iframe></div>`;
+        } else if (m.startsWith('text/') || /\.(txt|md|js|json|py|html|css)$/i.test(file.name)) {
+          const tr = await fetch(previewSrc); const text = await tr.text();
+          previewHtml = `<div class="share-preview"><pre>${text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').slice(0,4000)}</pre></div>`;
+        }
+        card.innerHTML = `
+          <div class="share-icon">${fileIcon(m, file.name)}</div>
+          <div class="share-name">${file.name}</div>
+          <div class="share-meta">${formatBytes(file.size)} · Shared via 7ostera Drive</div>
+          ${previewHtml}
+          <div class="share-actions">
+            <a class="btn btn-primary" href="${downloadSrc}" download="${file.name}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download
+            </a>
+            <button class="btn btn-secondary" onclick="copyLink()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              Copy link
+            </button>
+            <a class="btn btn-ghost" href="/">Get your own Drive</a>
+          </div>`;
+      } catch {
+        card.innerHTML = `<div class="error-state"><div class="big"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div><div style="font-size:16px;font-weight:600;margin-bottom:8px;">Link not found</div><div style="font-size:13px;color:var(--text-muted);">This file may have been removed or the link is no longer active.</div><br/><a href="/" class="btn btn-primary" style="display:inline-flex;">Go to Drive</a></div>`;
+      }
+    }
+    function copyLink() { navigator.clipboard.writeText(location.href).then(() => showToast('Link copied!', 'success')).catch(() => showToast('Copy failed', 'error')); }
+    load();
+  </script>
+</body>
+</html>

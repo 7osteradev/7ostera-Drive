@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>7ostera Drive — Private Cloud Storage</title>
+  <meta name="description" content="Fast, private, open-source cloud storage. Upload, organize, preview and share." />
+  <link rel="stylesheet" href="/css/main.css" />
+  <style>
+    body { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 64px;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(20px) saturate(180%);
+    }
+    [data-theme="light"] .nav { background: rgba(250,250,250,0.85); }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; }
+    .nav-logo img { height: 26px; border-radius: 5px; }
+    .nav-logo-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+
+    .hero {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 160px 24px 100px; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: var(--gradient-glow); pointer-events: none;
+    }
+    .hero::after {
+      content: ''; position: absolute;
+      top: 50%; left: 50%; transform: translate(-50%, -60%);
+      width: 800px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(120,119,198,0.08) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid var(--border); border-radius: 99px;
+      padding: 5px 14px; font-size: 12px; color: var(--text-muted);
+      margin-bottom: 28px; background: var(--surface-2);
+      animation: slideInUp 0.5s ease 0s both;
+    }
+    .hero-eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: pulse 2s infinite; }
+    .hero-h1 {
+      font-size: clamp(40px, 7vw, 80px); font-weight: 800;
+      letter-spacing: -3px; line-height: 1.0; margin-bottom: 24px;
+      animation: slideInUp 0.5s ease 0.1s both;
+    }
+    .hero-h1 .dim { color: var(--text-muted); }
+    .hero-sub {
+      font-size: 16px; color: var(--text-muted); max-width: 480px;
+      line-height: 1.75; margin-bottom: 40px;
+      animation: slideInUp 0.5s ease 0.2s both;
+    }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; animation: slideInUp 0.5s ease 0.3s both; }
+
+    .grid-bg {
+      position: absolute; inset: 0; pointer-events: none;
+      background-image: linear-gradient(var(--border) 1px, transparent 1px),
+                        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+    }
+
+    .logos-band {
+      padding: 32px 40px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      flex-wrap: wrap; background: var(--surface);
+    }
+    .logos-label { font-size: 11px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; margin-right: 8px; }
+    .tech-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 99px; border: 1px solid var(--border);
+      font-size: 12px; font-weight: 500; color: var(--text-muted);
+      background: var(--surface-2);
+    }
+    .tech-pill svg { width: 13px; height: 13px; }
+
+    .section { padding: 96px 24px; max-width: 1080px; margin: 0 auto; width: 100%; }
+    .section-eyebrow { font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
+    .section-h2 { font-size: clamp(26px, 4vw, 44px); font-weight: 700; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 14px; }
+    .section-desc { color: var(--text-muted); font-size: 15px; line-height: 1.75; max-width: 460px; }
+
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 64px; border: 1px solid var(--border); border-radius: var(--radius-xl); overflow: hidden; }
+    .feat-cell {
+      padding: 32px 28px; background: var(--surface);
+      transition: background var(--transition);
+    }
+    .feat-cell:hover { background: var(--surface-2); }
+    .feat-icon {
+      width: 36px; height: 36px; border-radius: var(--radius); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 18px;
+      background: var(--surface-2);
+    }
+    .feat-icon svg { width: 16px; height: 16px; stroke: var(--text); }
+    .feat-title { font-size: 14px; font-weight: 600; margin-bottom: 7px; }
+    .feat-desc { font-size: 13px; color: var(--text-muted); line-height: 1.65; }
+
+    .steps-section { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .steps-inner { padding: 96px 24px; max-width: 960px; margin: 0 auto; }
+    .steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 64px; position: relative; }
+    .steps-grid::before {
+      content: ''; position: absolute; top: 18px; left: calc(12.5%); right: calc(12.5%);
+      height: 1px; background: linear-gradient(90deg, transparent, var(--border), var(--border), transparent);
+    }
+    .step { text-align: center; padding: 0 16px; }
+    .step-circle {
+      width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; margin: 0 auto 20px;
+      background: var(--bg); color: var(--text-muted); position: relative; z-index: 1;
+    }
+    .step-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .step-desc { font-size: 12px; color: var(--text-muted); line-height: 1.65; }
+
+    .cta-section {
+      margin: 0 24px 96px; border-radius: var(--radius-2xl);
+      border: 1px solid var(--border); background: var(--surface);
+      padding: 80px 40px; text-align: center; position: relative; overflow: hidden;
+    }
+    .cta-section::before {
+      content: ''; position: absolute; top: -120px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 300px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(120,119,198,0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-h2 { font-size: clamp(28px, 4vw, 48px); font-weight: 700; letter-spacing: -1.5px; margin-bottom: 14px; }
+    .cta-desc { color: var(--text-muted); font-size: 15px; margin-bottom: 32px; }
+
+    footer {
+      border-top: 1px solid var(--border); padding: 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; color: var(--text-muted); max-width: 100%;
+    }
+    footer a { color: var(--text-muted); transition: color var(--transition); }
+    footer a:hover { color: var(--text); }
+    .footer-right { display: flex; gap: 20px; }
+
+    @media (max-width: 900px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .steps-grid { grid-template-columns: repeat(2, 1fr); gap: 32px; }
+      .steps-grid::before { display: none; }
+    }
+    @media (max-width: 600px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .logos-band { padding: 20px; }
+      .nav { padding: 0 16px; }
+      .cta-section { margin: 0 12px 60px; padding: 48px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-logo">
+      <img src="/logo.png" alt="" onerror="this.style.display='none'" />
+      <span>7ostera Drive</span>
+      <div class="nav-logo-dot"></div>
+    </div>
+    <div class="nav-links">
+      <button class="btn btn-ghost btn-sm btn-icon" id="theme-toggle" title="Toggle theme">
+        <svg id="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="icon-moon" class="hidden" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <a href="/login" class="btn btn-ghost btn-sm">Sign in</a>
+      <a href="/register" class="btn btn-primary btn-sm">Get started <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="grid-bg"></div>
+    <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>Open Source · Self-hosted · MIT License</div>
+    <h1 class="hero-h1">Your private<br/><span class="dim">cloud drive.</span></h1>
+    <p class="hero-sub">Upload, organize, preview and share your files — from your own server. No third parties. No limits.</p>
+    <div class="hero-actions">
+      <a href="/register" class="btn btn-primary btn-lg">Start for free</a>
+      <a href="/login" class="btn btn-outline btn-lg">Sign in</a>
+    </div>
+  </section>
+
+  <div class="logos-band">
+    <span class="logos-label">Built with</span>
+    <span class="tech-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Node.js</span>
+    <span class="tech-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>SQLite</span>
+    <span class="tech-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>JWT Auth</span>
+    <span class="tech-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Vanilla JS</span>
+  </div>
+
+  <div class="section">
+    <div class="section-eyebrow">Features</div>
+    <h2 class="section-h2">Everything you need,<br/>nothing you don't.</h2>
+    <p class="section-desc">Simple, fast, and powerful. No bloat, no subscriptions.</p>
+    <div class="features-grid">
+      <div class="feat-cell">
+        <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
+        <div class="feat-title">Folders & Navigation</div>
+        <div class="feat-desc">Create nested folders. Navigate with breadcrumbs like a real file system.</div>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+        <div class="feat-title">In-Browser Preview</div>
+        <div class="feat-desc">View images, videos, audio, PDFs and code without downloading.</div>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+        <div class="feat-title">Share Links</div>
+        <div class="feat-desc">Generate a public link in one click. Revoke it anytime.</div>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg></div>
+        <div class="feat-title">Drag & Drop Upload</div>
+        <div class="feat-desc">Drop files anywhere. Real-time progress bars included.</div>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <div class="feat-title">Smart Search</div>
+        <div class="feat-desc">Search all files in real-time with instant results.</div>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div class="feat-title">Secure by Default</div>
+        <div class="feat-desc">JWT, bcrypt, httpOnly cookies. Your data stays yours.</div>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
+        <div class="feat-title">Grid & List View</div>
+        <div class="feat-desc">Switch layouts. Sort by name, date or size instantly.</div>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div class="feat-title">Profile Settings</div>
+        <div class="feat-desc">Update name, email and password from the dashboard.</div>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+        <div class="feat-title">Open Source</div>
+        <div class="feat-desc">MIT licensed. Self-host on any server. Full control.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="steps-section">
+    <div class="steps-inner">
+      <div class="section-eyebrow" style="text-align:center;">How it works</div>
+      <h2 class="section-h2" style="text-align:center;">Deploy in minutes.</h2>
+      <div class="steps-grid">
+        <div class="step"><div class="step-circle">1</div><div class="step-title">Create account</div><div class="step-desc">Sign up with your email. No credit card required.</div></div>
+        <div class="step"><div class="step-circle">2</div><div class="step-title">Upload files</div><div class="step-desc">Drag & drop or click to upload any file type.</div></div>
+        <div class="step"><div class="step-circle">3</div><div class="step-title">Organize</div><div class="step-desc">Create folders, rename, sort and manage your files.</div></div>
+        <div class="step"><div class="step-circle">4</div><div class="step-title">Share</div><div class="step-desc">Share files with a public link — no login needed for viewers.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="padding-bottom: 0;">
+    <div class="cta-section">
+      <div class="cta-h2">Deploy your own<br/>cloud drive today.</div>
+      <div class="cta-desc">Free, open-source and fully private.</div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a href="/register" class="btn btn-primary btn-lg">Create free account</a>
+        <a href="/login" class="btn btn-outline btn-lg">Sign in</a>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img src="/logo.png" alt="" style="height:18px;border-radius:4px;" onerror="this.style.display='none'" />
+      <span>© 2025 7ostera Drive</span>
+    </div>
+    <div class="footer-right">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/login">Login</a>
+      <a href="/register">Register</a>
+    </div>
+  </footer>
+
+  <div id="toast-container"></div>
+  <script>
+    const saved = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    function updateIcons() {
+      const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+      document.getElementById('icon-sun').classList.toggle('hidden', dark);
+      document.getElementById('icon-moon').classList.toggle('hidden', !dark);
+    }
+    updateIcons();
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      updateIcons();
+    });
+    fetch('/api/auth/me').then(async r => {
+      if (r.ok) {
+
+        const btnLogin = document.querySelector('.hero-actions a.btn-outline');
+        const btnReg = document.querySelector('.hero-actions a.btn-primary');
+        if (btnLogin) { btnLogin.textContent = 'Go to Dashboard'; btnLogin.href = '/dashboard'; }
+        if (btnReg) btnReg.style.display = 'none';
+
+        window.location.href = '/dashboard';
+      }
+    }).catch(() => {});
+  </script>
+</body>
+</html>
