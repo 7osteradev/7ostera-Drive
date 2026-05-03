@@ -164,16 +164,21 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(PORT, () => {
-  const keySet = process.env.ENCRYPTION_KEY && process.env.ENCRYPTION_KEY.length >= 32;
-  const jwtSet = process.env.JWT_SECRET && process.env.JWT_SECRET !== 'dev_secret_please_change_in_production';
-  console.log(`\n  🚀  7ostera Drive is running!`);
-  console.log(`  ➜   http://localhost:${PORT}`);
-  console.log(`\n  Security Status:`);
-  console.log(`  ${keySet ? '✅' : '⚠️ '} ENCRYPTION_KEY ${keySet ? 'set' : 'NOT SET — files encrypted with fallback key'}`);
-  console.log(`  ${jwtSet ? '✅' : '⚠️ '} JWT_SECRET     ${jwtSet ? 'set' : 'NOT SET — using dev default'}`);
-  console.log(`  ✅  AES-256-GCM  File encryption active`);
-  console.log(`  ✅  AES-256-CBC  Field encryption active`);
-  console.log(`  ✅  Helmet       Security headers active`);
-  console.log(`  ✅  Rate limiter Auth: 20/15min · API: 300/min\n`);
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    const keySet = process.env.ENCRYPTION_KEY && process.env.ENCRYPTION_KEY.length >= 32;
+    const jwtSet = process.env.JWT_SECRET && process.env.JWT_SECRET !== 'dev_secret_please_change_in_production';
+    console.log(`\n  🚀  7ostera Drive is running!`);
+    console.log(`  ➜   http://localhost:${PORT}`);
+    console.log(`\n  Security Status:`);
+    console.log(`  ${keySet ? '✅' : '⚠️ '} ENCRYPTION_KEY ${keySet ? 'set' : 'NOT SET — files encrypted with fallback key'}`);
+    console.log(`  ${jwtSet ? '✅' : '⚠️ '} JWT_SECRET     ${jwtSet ? 'set' : 'NOT SET — using dev default'}`);
+    console.log(`  ✅  AES-256-GCM  File encryption active`);
+    console.log(`  ✅  AES-256-CBC  Field encryption active`);
+    console.log(`  ✅  Helmet       Security headers active`);
+    console.log(`  ✅  Rate limiter Auth: 20/15min · API: 300/min\n`);
+  });
+}
+
+module.exports = app;
+
