@@ -162,12 +162,17 @@
       <div class="nav-logo-dot"></div>
     </div>
     <div class="nav-links">
+      <a href="https://github.com/7osteradev/7ostera-Drive" target="_blank" class="btn btn-ghost btn-sm btn-icon" title="GitHub Repository">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+      </a>
       <button class="btn btn-ghost btn-sm btn-icon" id="theme-toggle" title="Toggle theme">
         <svg id="icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         <svg id="icon-moon" class="hidden" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
-      <a href="/login" class="btn btn-ghost btn-sm">Sign in</a>
-      <a href="/register" class="btn btn-primary btn-sm">Get started <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></a>
+      <div id="nav-auth" style="display: flex; gap: 6px;">
+        <a href="/login" class="btn btn-ghost btn-sm">Sign in</a>
+        <a href="/register" class="btn btn-primary btn-sm">Get started <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></a>
+      </div>
     </div>
   </nav>
 
@@ -176,7 +181,7 @@
     <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>Open Source · Self-hosted · MIT License</div>
     <h1 class="hero-h1">Your private<br/><span class="dim">cloud drive.</span></h1>
     <p class="hero-sub">Upload, organize, preview and share your files — from your own server. No third parties. No limits.</p>
-    <div class="hero-actions">
+    <div class="hero-actions" id="hero-actions">
       <a href="/register" class="btn btn-primary btn-lg">Start for free</a>
       <a href="/login" class="btn btn-outline btn-lg">Sign in</a>
     </div>
@@ -260,7 +265,7 @@
     <div class="cta-section">
       <div class="cta-h2">Deploy your own<br/>cloud drive today.</div>
       <div class="cta-desc">Free, open-source and fully private.</div>
-      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;" id="cta-actions">
         <a href="/register" class="btn btn-primary btn-lg">Create free account</a>
         <a href="/login" class="btn btn-outline btn-lg">Sign in</a>
       </div>
@@ -272,10 +277,17 @@
       <img src="/logo.png" alt="" style="height:18px;border-radius:4px;" onerror="this.style.display='none'" />
       <span>© 2025 7ostera Drive</span>
     </div>
-    <div class="footer-right">
-      <a href="/dashboard">Dashboard</a>
-      <a href="/login">Login</a>
-      <a href="/register">Register</a>
+    <div style="display:flex; gap: 24px; align-items: center;">
+      <div style="display:flex; gap: 16px;" id="footer-github">
+        <a href="https://github.com/7osteradev/7ostera-Drive" target="_blank">GitHub</a>
+        <a href="https://github.com/7osteradev/7ostera-Drive/issues" target="_blank">Report Bug</a>
+        <a href="https://github.com/7osteradev/7ostera-Drive/issues" target="_blank">Suggestions</a>
+      </div>
+      <div class="footer-right" id="footer-auth">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/login">Login</a>
+        <a href="/register">Register</a>
+      </div>
     </div>
   </footer>
 
@@ -297,13 +309,52 @@
     });
     fetch('/api/auth/me').then(async r => {
       if (r.ok) {
+        const data = await r.json();
+        const user = data.user;
+        
+        // Update Nav
+        const navAuth = document.getElementById('nav-auth');
+        if (navAuth) {
+          navAuth.innerHTML = `
+            <a href="/dashboard" class="btn btn-primary btn-sm">Go to Dashboard</a>
+          `;
+        }
 
-        const btnLogin = document.querySelector('.hero-actions a.btn-outline');
-        const btnReg = document.querySelector('.hero-actions a.btn-primary');
-        if (btnLogin) { btnLogin.textContent = 'Go to Dashboard'; btnLogin.href = '/dashboard'; }
-        if (btnReg) btnReg.style.display = 'none';
+        // Update Hero
+        const heroH1 = document.querySelector('.hero-h1');
+        if (heroH1) {
+          heroH1.innerHTML = `Welcome back,<br/><span class="dim">${user.name.split(' ')[0]}.</span>`;
+        }
+        const heroSub = document.querySelector('.hero-sub');
+        if (heroSub) {
+          heroSub.textContent = 'Your files are ready and waiting. Continue where you left off.';
+        }
+        const heroActions = document.getElementById('hero-actions');
+        if (heroActions) {
+          heroActions.innerHTML = `
+            <a href="/dashboard" class="btn btn-primary btn-lg">Open Dashboard</a>
+            <a href="/dashboard" class="btn btn-outline btn-lg">My Files</a>
+          `;
+        }
 
-        window.location.href = '/dashboard';
+        // Update CTA
+        const ctaActions = document.getElementById('cta-actions');
+        if (ctaActions) {
+          ctaActions.innerHTML = `
+            <a href="/dashboard" class="btn btn-primary btn-lg">Go to my Drive</a>
+          `;
+        }
+        const ctaH2 = document.querySelector('.cta-h2');
+        if (ctaH2) ctaH2.textContent = 'Ready to manage your files?';
+
+        // Update Footer
+        const footerAuth = document.getElementById('footer-auth');
+        if (footerAuth) {
+          footerAuth.innerHTML = `
+            <a href="/dashboard">Dashboard</a>
+            <a href="/api/auth/logout" onclick="event.preventDefault(); fetch('/api/auth/logout', {method:'POST'}).then(() => location.reload())">Logout</a>
+          `;
+        }
       }
     }).catch(() => {});
   </script>
